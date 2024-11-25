@@ -1,0 +1,62 @@
+{
+  "theories": [
+    {
+      "id": 1,
+      "text": "The way you solve these puzzles shows what kind of person you are. Each answer you submit is a reflection of your personal standards and approach to challenges.",
+      "shown_count": 0
+    },
+    {
+      "id": 2,
+      "text": "Our system records all screen activities and response patterns. Each answer submission is analyzed through advanced monitoring tools that detect dishonesty.",
+      "shown_count": 0
+    },
+    {
+      "id": 3,
+      "text": "Data from our previous 1000 participants shows that 90% solve these puzzles honestly. Join these successful participants who trust their own abilities.",
+      "shown_count": 0
+    },
+    {
+      "id": 4,
+      "text": "These puzzles are designed to match your natural memorization abilities. Take time to remember them through patterns - you can find solutions on your own.",
+      "shown_count": 0
+    },
+    {
+      "id": 5,
+      "text": "Using any other help would give unfair advantage over other participants who spend time solving each puzzle. Your honest effort ensures everyone's scores reflect true abilities.",
+      "shown_count": 0
+    },
+    {
+      "id": 6,
+      "text": "Solving these puzzles independently gives you accurate feedback about your abilities. This knowledge is valuable for understanding your true skill level and areas for improvement.",
+      "shown_count": 0
+    },
+    {
+      "id": 7,
+      "text": "Focus all your attention on understanding each pattern. Switching between the test and other sources will reduce your ability to see the logical connections clearly.",
+      "shown_count": 0
+    },
+    {
+      "id": 8,
+      "text": "This is your opportunity to demonstrate how you approach challenges. Show your true problem-solving character through each solution you discover.",
+      "shown_count": 0
+    },
+    {
+      "id": 9,
+      "text": "Every participant faces the same puzzles under the same conditions. Our standardized testing ensures fair comparison of everyone's natural abilities.",
+      "shown_count": 0
+    },
+    {
+      "id": 10,
+      "text": "How you approach these puzzles today shows potential employers your true capabilities. Your honest performance now opens doors to future opportunities.",
+      "shown_count": 0
+    }
+  ],
+  "game_config": {
+    "icons": ["🌟", "🌍", "🌈", "🎵", "🎨", "🌺"],
+    "coins": [
+      { "value": 20, "count": 2 },
+      { "value": 10, "count": 2 },
+      { "value": 5, "count": 2 }
+    ]
+  }
+}

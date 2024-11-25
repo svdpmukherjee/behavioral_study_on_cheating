@@ -1,127 +1,196 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import LandingPage from "./components/LandingPage";
+import ConsentPage from "./components/ConsentPage";
+import ProlificIdPage from "./components/ProlificIdPage";
+import TestPage from "./components/TestPage";
+import ThankYouPage from "./components/ThankYouPage";
+import Container from "./components/Container";
 
-const AptitudeTest = () => {
-  const [page, setPage] = useState('instructions');
-  const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
-  const [timeLeft, setTimeLeft] = useState(120);
-  const [mouseData, setMouseData] = useState([]);
-  const [tabFocused, setTabFocused] = useState(true);
-  const timerRef = useRef(null);
+const App = () => {
+  // Navigation state
+  const [page, setPage] = useState("landing");
 
+  // Participant data
+  const [prolificId, setProlificId] = useState("");
+  const [startTime] = useState(new Date().toISOString());
+  const [endTime, setEndTime] = useState(null);
+
+  // URL parameter handling
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      setTabFocused(!document.hidden);
+    const params = new URLSearchParams(window.location.search);
+    const PROLIFIC_PID = params.get("PROLIFIC_PID");
+    if (PROLIFIC_PID) {
+      setProlificId(PROLIFIC_PID);
+    }
+  }, []);
+
+  // Prevent browser back button
+  useEffect(() => {
+    const handlePopState = (event) => {
+      event.preventDefault();
+      window.history.pushState(null, "", window.location.pathname);
+      alert("Please use the buttons provided to navigate through the study.");
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.history.pushState(null, "", window.location.pathname);
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener("popstate", handlePopState);
     };
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    try {
-      const submissionData = {
-        answer,
-        mouseData,
-        tabFocus: tabFocused,
-        timeLeft
-      };
-      console.log("Submitting data:", submissionData);
-      const response = await axios.post('http://localhost:8000/api/submit', submissionData);
-      console.log("Response:", response.data);
-      setPage('thank-you');
-    } catch (error) {
-      console.error('Error submitting answer:', error.response?.data || error.message);
-    }
-  }, [answer, mouseData, tabFocused, timeLeft]);
+  // Navigation handlers
+  const handleStartStudy = () => {
+    setPage("consent");
+  };
 
-  useEffect(() => {
-    if (page === 'question') {
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prevTime) => {
-          if (prevTime <= 1) {
-            clearInterval(timerRef.current);
-            handleSubmit();
-            return 0;
-          }
-          return prevTime - 1;
-        });
-      }, 1000);
-    }
+  const handleConsent = () => {
+    setPage("prolificId");
+  };
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+  const handleProlificIdSubmit = (id) => {
+    setProlificId(id);
+    setPage("test");
+  };
+
+  const handleTestComplete = () => {
+    setEndTime(new Date().toISOString());
+    setPage("thankYou");
+  };
+
+  // Progress calculation
+  const getProgress = () => {
+    const progressMap = {
+      landing: 0,
+      consent: 25,
+      prolificId: 50,
+      test: 75,
+      thankYou: 100,
     };
-  }, [page, handleSubmit]);
-
-  const handleMouseMove = (e) => {
-    setMouseData((prevData) => [...prevData, { x: e.clientX, y: e.clientY, time: Date.now() }]);
+    return progressMap[page];
   };
 
-  const handleStartTest = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/api/question');
-      setQuestion(response.data.question);
-      setPage('question');
-    } catch (error) {
-      console.error('Error fetching question:', error);
+  // Page content renderer
+  const renderPage = () => {
+    switch (page) {
+      case "landing":
+        return <LandingPage onStartStudy={handleStartStudy} />;
+
+      case "consent":
+        return <ConsentPage onConsent={handleConsent} />;
+
+      case "prolificId":
+        return (
+          <ProlificIdPage
+            onSubmit={handleProlificIdSubmit}
+            initialValue={prolificId} // In case it came from URL
+          />
+        );
+
+      case "test":
+        return (
+          <TestPage
+            prolificId={prolificId}
+            startTime={startTime}
+            onComplete={handleTestComplete}
+          />
+        );
+
+      case "thankYou":
+        return (
+          <ThankYouPage
+            prolificId={prolificId}
+            startTime={startTime}
+            endTime={endTime}
+          />
+        );
+
+      default:
+        return (
+          <div className="text-center text-red-600">
+            <h2 className="text-xl font-bold">Error</h2>
+            <p>An unexpected error occurred. Please refresh the page.</p>
+          </div>
+        );
     }
   };
-
-  const renderInstructions = () => (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-3xl font-bold mb-4 text-blue-600">Aptitude Test Instructions</h1>
-      <p className="mb-6 text-gray-700">You will have 2 minutes to answer the question. Good luck!</p>
-      <button 
-        onClick={handleStartTest}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300"
-      >
-        Start Test
-      </button>
-    </div>
-  );
-
-  const renderQuestion = () => (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md" onMouseMove={handleMouseMove}>
-      <h2 className="text-2xl font-semibold mb-4 text-blue-600">Question:</h2>
-      <p className="mb-4 pb-5 text-gray-700">{question}</p>
-      <textarea
-        value={answer}
-        onChange={(e) => setAnswer(e.target.value)}
-        placeholder="Enter your answer here"
-        className="w-full p-2 mb-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        rows="2"
-      />
-      <div className="flex justify-between items-center">
-        <p className="text-gray-600">Time left: <span className="font-bold text-red-500">{timeLeft}</span> seconds</p>
-        <button 
-          onClick={handleSubmit}
-          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300"
-        >
-          Submit
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderThankYou = () => (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4 text-green-600">Thank you for taking the test!</h2>
-      <p className="text-gray-700">We will contact you if you are eligible for another test in the near future.</p>
-    </div>
-  );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      {page === 'instructions' && renderInstructions()}
-      {page === 'question' && renderQuestion()}
-      {page === 'thank-you' && renderThankYou()}
+    <div className="min-h-screen bg-gray-100">
+      {/* Progress bar */}
+      <div className="fixed top-0 left-0 w-full h-2 bg-gray-200">
+        <div
+          className="h-full bg-blue-500 transition-all duration-300"
+          style={{ width: `${getProgress()}%` }}
+        />
+      </div>
+
+      {/* Main content */}
+      <div className="p-4">
+        <Container>
+          {/* Study header */}
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-800">
+              {page === "thankYou" ? "" : "Game to Test Your Memory"}
+            </h1>
+            {prolificId && page !== "thankYou" && (
+              <div>
+                <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-600 mt-4">
+                  <div className="space-y-2">
+                    <p>Participant ID: {prolificId}</p>
+                    <p>
+                      Session started:{" "}
+                      {new Date(startTime).toLocaleTimeString()}
+                    </p>
+                    {page === "thankYou" && endTime && (
+                      <p>
+                        Session completed:{" "}
+                        {new Date(endTime).toLocaleTimeString()}
+                      </p>
+                    )}
+                    {page === "thankYou" && (
+                      <p>
+                        Total duration:{" "}
+                        {Math.round(
+                          (new Date(endTime) - new Date(startTime)) / 60000
+                        )}{" "}
+                        minutes
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="p-2"></div>
+              </div>
+            )}
+          </div>
+
+          {/* Page content */}
+          {renderPage()}
+
+          {/* Study footer */}
+          {/* <div className="mt-8 text-center text-sm text-gray-500">
+            <p>University of Luxembourg</p>
+            {startTime && page !== "landing" && (
+              <p className="mt-1">
+                Session started: {new Date(startTime).toLocaleTimeString()}
+              </p>
+            )}
+          </div> */}
+        </Container>
+      </div>
+
+      {/* Exit confirmation */}
+      {page !== "thankYou" && (
+        <div style={{ display: "none" }}>
+          {/* This div helps trigger browser's exit confirmation */}
+          <form>
+            <input type="text" />
+          </form>
+        </div>
+      )}
     </div>
   );
 };
 
-export default AptitudeTest;
+export default App;
